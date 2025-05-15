@@ -1,0 +1,32 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "createSplitter",
+      "inputs": [
+        {
+          "name": "_addressToSplit",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_percentageToSplit",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        },
+        { "name": "_creator", "type": "address", "internalType": "address" },
+        { "name": "_name", "type": "string", "internalType": "string" },
+        { "name": "_symbol", "type": "string", "internalType": "string" },
+        {
+          "name": "_pricePerMint",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        { "name": "splitter", "type": "address", "internalType": "address" }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ]
+}
