@@ -4,15 +4,15 @@ pragma solidity ^0.8.13;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {NFT} from "./NFT.sol";
 
-contract Splitter is Ownable {
+contract DynamicSplitter is Ownable {
     struct SubSplitMetadata {
         address account;
-        uint256 percentage;
+        uint16 percentage;
         uint256 amountToBeRetired;
     }
 
-    uint256 constant BPS_DENOMINATOR = 10000; // 100% in Basis Points
-    uint256 private totalPercentageSplit;
+    uint16 constant BPS_DENOMINATOR = 10000; // 100% in Basis Points
+    uint16 private totalPercentageSplit;
     uint256 private payCounter;
     uint256 private pricePerMint;
     address private creator;
@@ -22,11 +22,12 @@ contract Splitter is Ownable {
 
     constructor(
         address[] memory _addressToSplit,
-        uint256[] memory _percentageToSplit,
+        uint16[] memory _percentageToSplit,
         address _creator,
         string memory _name,
         string memory _symbol,
-        uint256 _pricePerMint
+        uint256 _pricePerMint,
+        string memory _baseURI
     ) Ownable(_creator) {
         uint256 sumSubSplitPercentages = 0;
         for (uint256 i = 0; i < _percentageToSplit.length; i++) {
@@ -47,7 +48,7 @@ contract Splitter is Ownable {
         totalPercentageSplit = 1500; // 1500 para 15.00%
         creator = _creator;
         pricePerMint = _pricePerMint;
-        tokenAddress = address(new NFT(address(this), _name, _symbol));
+        tokenAddress = address(new NFT(address(this), _name, _symbol, _baseURI));
     }
 
     function makePayment(address _to) public payable {
