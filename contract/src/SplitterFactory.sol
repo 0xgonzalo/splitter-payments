@@ -23,23 +23,34 @@ import {DynamicSplitter} from "./DynamicSplitter.sol";
 
 contract SplitterFactory {
     function createDynamicSplitter(
-        address[] memory _addressToSplit,
-        uint16[] memory _percentageToSplit,
         address _creator,
         string memory _name,
         string memory _symbol,
+        string memory _baseURI,
         uint256 _pricePerMint,
-        string memory _baseURI
+        // este tiene 2 decimales, por ejemplo 1500 para 15.00%
+        uint16 _percentageToBeginSplit,
+        uint16 _maxPercentageSplit,
+        uint16 _toIncreasePercentageSplit,
+        uint256 _goalForIncreasePercentage,
+        bool setToPermanent,
+        address[] memory _addressToSplit,
+        uint16[] memory _percentageToSplit
     ) public returns (address splitter) {
         splitter = address(
             new DynamicSplitter(
-                _addressToSplit,
-                _percentageToSplit,
                 _creator,
                 _name,
                 _symbol,
+                _baseURI,
                 _pricePerMint,
-                _baseURI
+                _percentageToBeginSplit,
+                _maxPercentageSplit,
+                _toIncreasePercentageSplit,
+                _goalForIncreasePercentage,
+                setToPermanent,
+                _addressToSplit,
+                _percentageToSplit
             )
         );
     }

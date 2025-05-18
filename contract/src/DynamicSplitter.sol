@@ -11,31 +11,76 @@ contract DynamicSplitter is Ownable {
         uint256 amountToBeRetired;
     }
 
+    struct PercentageSplitMetadata {
+        uint16 actual;
+        uint16 max;
+        uint16 toIncrease;
+    }
+
+    struct VoterMetadata {
+        bytes1 hasVoted;
+        bytes1 isAllowed;
+    }
+
+    struct BallotBoxMetadata {
+        bytes1 decicionID;
+        uint256 proposal;
+        uint256 totalOfVotes;
+        uint256 executeVoteAmount;
+        uint256 cancelVoteAmount;
+    }
+
+    bytes1 fuse;
     uint16 constant BPS_DENOMINATOR = 10000; // 100% in Basis Points
-    uint16 private totalPercentageSplit;
-    uint256 private payCounter;
-    uint256 private pricePerMint;
-    address private creator;
-    SubSplitMetadata[] private subSplits;
-    uint256 private amountToBeRetiredForCreator;
-    address private tokenAddress;
+
+    PercentageSplitMetadata percentageSplit;
+
+    uint256 pricePerMint;
+    uint256 amountToBeRetiredForCreator;
+    uint256 payCounter;
+    uint256 goalForIncreasePercentage;
+
+    address creator;
+    address tokenAddress;
+
+    BallotBoxMetadata ballotBox;
+
+    SubSplitMetadata[] subSplits;
+    mapping(address => VoterMetadata) voter;
+
+    // --- Modifiers ---
+
+    modifier checkVoteFuse() {
+        if (fuse == bytes1(0x00)) {
+            revert("Fuse is exploded, you cannot perform this action.");
+        }
+        _;
+    }
 
     constructor(
-        address[] memory _addressToSplit,
-        uint16[] memory _percentageToSplit,
         address _creator,
         string memory _name,
         string memory _symbol,
+        string memory _baseURI,
         uint256 _pricePerMint,
-        string memory _baseURI
+        // este tiene 2 decimales, por ejemplo 1500 para 15.00%
+        uint16 _percentageToBeginSplit,
+        uint16 _maxPercentageSplit,
+        uint16 _toIncreasePercentageSplit,
+        uint256 _goalForIncreasePercentage,
+        bool setToPermanent,
+        address[] memory _addressToSplit,
+        uint16[] memory _percentageToSplit
     ) Ownable(_creator) {
         uint256 sumSubSplitPercentages = 0;
+
         for (uint256 i = 0; i < _percentageToSplit.length; i++) {
             sumSubSplitPercentages += _percentageToSplit[i];
         }
         if (sumSubSplitPercentages != BPS_DENOMINATOR) {
             revert("Sub-split percentages must sum to 100%");
         }
+
         for (uint256 i = 0; i < _addressToSplit.length; i++) {
             subSplits.push(
                 SubSplitMetadata({
@@ -44,11 +89,26 @@ contract DynamicSplitter is Ownable {
                     amountToBeRetired: 0
                 })
             );
+            voter[_addressToSplit[i]] = VoterMetadata({
+                hasVoted: 0x00,
+                isAllowed: 0x01 // está permitido para votar
+            });
         }
-        totalPercentageSplit = 1500; // 1500 para 15.00%
+
+        percentageSplit = PercentageSplitMetadata({
+            actual: _percentageToBeginSplit,
+            max: _maxPercentageSplit,
+            toIncrease: _toIncreasePercentageSplit
+        });
+        goalForIncreasePercentage = _goalForIncreasePercentage;
         creator = _creator;
         pricePerMint = _pricePerMint;
-        tokenAddress = address(new NFT(address(this), _name, _symbol, _baseURI));
+        tokenAddress = address(
+            new NFT(address(this), _name, _symbol, _baseURI)
+        );
+
+        // si se establece como permanente, fuse se pone en 0
+        fuse = setToPermanent ? bytes1(0x00) : bytes1(0x01); 
     }
 
     function makePayment(address _to) public payable {
@@ -61,11 +121,12 @@ contract DynamicSplitter is Ownable {
             revert();
         }
 
-        // si todavía no se ha alcanzado el límite de 45%
-        if (totalPercentageSplit < 4500) {
+        // si todavía no se ha alcanzado el límite
+        if (percentageSplit.actual < percentageSplit.max) {
             payCounter++; // incrementar el contador de pagos
-            if (payCounter % 7000 == 0) { // cada 7000 pagos
-                totalPercentageSplit += 100; // aumentar el porcentaje en 1%
+            if (payCounter % goalForIncreasePercentage == 0) {
+                // cada que se alcance el objetivo de pagos, aumentar el porcentaje
+                percentageSplit.actual += percentageSplit.toIncrease; // aumentar el porcentaje
                 payCounter = 0; // reiniciar el contador
             }
         }
@@ -97,7 +158,7 @@ contract DynamicSplitter is Ownable {
     ) public view returns (uint256 amountForCreator) {
         // totalPercentageReferLink está en puntos base (ej: 1500 para 15.00%)
         amountForCreator =
-            (_totalAmount * totalPercentageSplit) /
+            (_totalAmount * percentageSplit.actual) /
             BPS_DENOMINATOR;
         return amountForCreator;
     }
@@ -156,54 +217,316 @@ contract DynamicSplitter is Ownable {
         }
     }
 
-    // getters
-    function getSubSplits()
-        public
-        view
-        returns (SubSplitMetadata[] memory)
-    {
-        return subSplits;
-    }
-    function getCreator() public view returns (address) {
-        return creator;
-    }
-    function getPricePerMint() public view returns (uint256) {
-        return pricePerMint;
-    }
-    function getTokenAddress() public view returns (address) {
-        return tokenAddress;
-    }
-    function getTotalPercentageSplit() public view returns (uint256) {
-        return totalPercentageSplit;
-    }
-    function getPayCounter() public view returns (uint256) {
-        return payCounter;
-    }
-    function getAmountToBeRetiredForCreator() public view returns (uint256) {
-        return amountToBeRetiredForCreator;
-    }
-    function getAmountToBeRetiredForSubSplit(
-        uint256 index
-    ) public view returns (uint256) {
-        return subSplits[index].amountToBeRetired;
-    }
-    function getSubSplitAccount(
-        uint256 index
-    ) public view returns (address) {
-        return subSplits[index].account;
-    }
-    function getSubSplitPercentage(
-        uint256 index
-    ) public view returns (uint256) {
-        return subSplits[index].percentage;
-    }
-    function getSubSplitAmountToBeRetired(
-        uint256 index
-    ) public view returns (uint256) {
-        return subSplits[index].amountToBeRetired;
-    }
-    function getSubSplitLength() public view returns (uint256) {
-        return subSplits.length;
+    // funciones de votación
+
+    // votacion para explotar el fuse (id: 0x01)
+    // es decir que las deciciones de 
+    // - cambiar el porcentaje máximo de split
+    // - aumentar el porcentaje de split
+    // - cambiar el goalForIncreasePercentage
+    // - cambiar el percentageSplit.toIncrease
+    // ya no se puedan hacer y esta decisión es permanente
+    
+    function proposeExplodeFuse() external checkVoteFuse {
+
+        if (ballotBox.decicionID != 0x00) {
+            revert("There is already an ongoing vote.");
+        }
+
+        // el que esta ejecutando la votación se le permite votar
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to cast a vote.");
+        }
+
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x01, // id para la votación de explosión del fuse
+            proposal: 0,
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
     }
 
+    function voteForExplodeFuse(bool approve) external {
+        // verificar si el votante está permitido
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to vote.");
+        }
+
+        // verificar si ya votó
+        if (!userAlreadyVoted()) {
+            revert("You have already voted.");
+        }
+
+        // marcar como votado
+        voter[msg.sender].hasVoted = 0x01;
+
+        // incrementar el total de votos
+        ballotBox.totalOfVotes++;
+
+        // incrementar la cantidad de votos a favor o en contra
+        if (approve) {
+            ballotBox.executeVoteAmount++;
+        } else {
+            ballotBox.cancelVoteAmount++;
+        }
+    }
+
+    function executeExplodeFuse() external {
+        if (ballotBox.decicionID != 0x01) {
+            revert("There is no ongoing vote.");
+        }
+        // ver si se ha llegado al maximo de votos
+        if (subSplits.length != ballotBox.totalOfVotes) {
+            revert("Not enough votes to execute.");
+        }
+        // verificar si la votación fue exitosa
+        if (ballotBox.executeVoteAmount == ballotBox.totalOfVotes) {
+            // si se aprueba, se pone el fuse en 0 (explota el fuse)
+            fuse = bytes1(0x00);
+        }
+        // reiniciar la votación
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x00,
+            proposal: 0,
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+
+    // votaciones para aumentar el máximo porcentaje de split (id: 0x02)
+    function proposeNewMaxPercentageSplit(
+        uint16 newMaxPercentageSplit
+    ) external checkVoteFuse {
+
+        if (ballotBox.decicionID != 0x00) {
+            revert("There is already an ongoing vote.");
+        }
+
+        // el que esta ejecutando la votación se le permite votar
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to cast a vote.");
+        }
+
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x02, // id para la votación de aumento de porcentaje
+            proposal: uint256(newMaxPercentageSplit),
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+    function voteForNewMaxPercentageSplit(bool approve) external {
+        // verificar si el votante está permitido
+
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to vote.");
+        }
+
+        // verificar si ya votó
+        if (!userAlreadyVoted()) {
+            revert("You have already voted.");
+        }
+
+        // marcar como votado
+        voter[msg.sender].hasVoted = 0x01;
+
+        // incrementar el total de votos
+        ballotBox.totalOfVotes++;
+
+        // incrementar la cantidad de votos a favor o en contra
+        if (approve) {
+            ballotBox.executeVoteAmount++;
+        } else {
+            ballotBox.cancelVoteAmount++;
+        }
+    }
+
+    function executeNewMaxPercentageSplit() external {
+        if (ballotBox.decicionID != 0x02) {
+            revert("There is no ongoing vote.");
+        }
+        // ver si se ha llegado al maximo de votos
+        if (subSplits.length != ballotBox.totalOfVotes) {
+            revert("Not enough votes to execute.");
+        }
+
+        // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
+        if (ballotBox.executeVoteAmount == ballotBox.totalOfVotes) {
+            percentageSplit.max = uint16(ballotBox.proposal);
+        }
+
+        // reiniciar la votación
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x00,
+            proposal: 0,
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+    // votaciones para cambiar el goalForIncreasePercentage (id: 0x03)
+    function proposeNewGoalForIncreasePercentage(
+        uint256 newGoalForIncreasePercentage
+    ) external checkVoteFuse {
+
+
+        if (ballotBox.decicionID != 0x00) {
+            revert("There is already an ongoing vote.");
+        }
+
+        // el que esta ejecutando la votación se le permite votar
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to cast a vote.");
+        }
+
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x03, // id para la votación de cambio de goalForIncreasePercentage
+            proposal: newGoalForIncreasePercentage,
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+    function voteForNewGoalForIncreasePercentage(bool approve) external {
+        // verificar si el votante está permitido
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to vote.");
+        }
+
+        // verificar si ya votó
+        if (!userAlreadyVoted()) {
+            revert("You have already voted.");
+        }
+
+        // marcar como votado
+        voter[msg.sender].hasVoted = 0x01;
+
+        // incrementar el total de votos
+        ballotBox.totalOfVotes++;
+
+        // incrementar la cantidad de votos a favor o en contra
+        if (approve) {
+            ballotBox.executeVoteAmount++;
+        } else {
+            ballotBox.cancelVoteAmount++;
+        }
+    }
+
+    function executeNewGoalForIncreasePercentage() external {
+        if (ballotBox.decicionID != 0x03) {
+            revert("There is no ongoing vote.");
+        }
+        // ver si se ha llegado al maximo de votos
+        if (subSplits.length != ballotBox.totalOfVotes) {
+            revert("Not enough votes to execute.");
+        }
+
+        // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
+        if (ballotBox.executeVoteAmount == ballotBox.totalOfVotes) {
+            goalForIncreasePercentage = ballotBox.proposal;
+        }
+
+        // reiniciar la votación
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x00,
+            proposal: 0,
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+    // votaciones para cambiar el percentageSplit.toIncrease por goal (id: 0x04)
+    function proposeNewPercentageSplitToIncrease(
+        uint16 newPercentageSplitToIncrease
+    ) external checkVoteFuse {
+
+
+        if (ballotBox.decicionID != 0x00) {
+            revert("There is already an ongoing vote.");
+        }
+
+        // el que esta ejecutando la votación se le permite votar
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to cast a vote.");
+        }
+
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x04, // id para la votación de cambio de percentageSplit.toIncrease
+            proposal: uint256(newPercentageSplitToIncrease),
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+    function voteForNewPercentageSplitToIncrease(bool approve) external {
+        // verificar si el votante está permitido
+        if (!imAllowedToVote()) {
+            revert("You are not allowed to vote.");
+        }
+
+        // verificar si ya votó
+        if (!userAlreadyVoted()) {
+            revert("You have already voted.");
+        }
+
+        // marcar como votado
+        voter[msg.sender].hasVoted = 0x01;
+
+        // incrementar el total de votos
+        ballotBox.totalOfVotes++;
+
+        // incrementar la cantidad de votos a favor o en contra
+        if (approve) {
+            ballotBox.executeVoteAmount++;
+        } else {
+            ballotBox.cancelVoteAmount++;
+        }
+    }
+
+    function executeNewPercentageSplitToIncrease() external {
+        if (ballotBox.decicionID != 0x04) {
+            revert("There is no ongoing vote.");
+        }
+        // ver si se ha llegado al maximo de votos
+        if (subSplits.length != ballotBox.totalOfVotes) {
+            revert("Not enough votes to execute.");
+        }
+
+        // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
+        if (ballotBox.executeVoteAmount == ballotBox.totalOfVotes) {
+            percentageSplit.toIncrease = uint16(ballotBox.proposal);
+        }
+
+        // reiniciar la votación
+        ballotBox = BallotBoxMetadata({
+            decicionID: 0x00,
+            proposal: 0,
+            totalOfVotes: 0,
+            executeVoteAmount: 0,
+            cancelVoteAmount: 0
+        });
+    }
+
+    // internal getters
+    function userAlreadyVoted() internal view returns (bool) {
+        return voter[msg.sender].hasVoted == 0x01;
+    }
+
+    
+
+    // getters
+
+    function imAllowedToVote() public view returns (bool) {
+        return voter[msg.sender].isAllowed == 0x01;
+    }
+
+    
 }
