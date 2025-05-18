@@ -1,4 +1,18 @@
 // SPDX-License-Identifier: MIT
+
+/**
+ ____        _ _ _      __     ___            
+/ ___| _ __ | (_) |_   / /    / / |_ ___ _ __ 
+\___ \| '_ \| | | __| / /    / /| __/ _ \ '__|
+ ___) | |_) | | | |_ / /    / / | ||  __/ |   
+|____/| .__/|_|_|\__/_/    /_/   \__\___|_|   
+      |_|                                     
+
+ * @title Splitter (Dynamic Type)
+ * @author jistro.eth
+ * @notice This contract manages a dynamic splitter that allows for
+ *         flexible percentage splits among multiple addresses.
+ */
 pragma solidity ^0.8.13;
 
 import {VotingMechanism} from "./VotingMechanism.sol";
