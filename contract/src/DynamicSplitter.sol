@@ -78,51 +78,63 @@ contract DynamicSplitter is VotingMechanism {
         );
     }
 
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Payment Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
+    /**
+     *  @notice Allows a user to make a payment to mint an NFT.
+     *  @param _to The address to which the NFT will be minted.
+     *  @dev The function checks if the sender is the creator, validates the payment amount,
+     *  and updates the split percentages based on the number of payments made.
+     */
     function makePayment(address _to) public payable {
         if (msg.sender == creator) {
             revert();
         }
-
-        //validar si el monto es suficiente
         if (msg.value != pricePerMint) {
             revert();
         }
 
         // si todavía no se ha alcanzado el límite
+        /// @notice Check if the current percentage is less than the maximum allowed percentage.
         if (percentageSplit.actual < percentageSplit.max) {
-            payCounter++; // incrementar el contador de pagos
+            /// @notice Increment the payment counter.
+            payCounter++;
+            ///@notice Check if the payment counter has reached the goal for increasing the percentage.
             if (payCounter % goalForIncreasePercentage == 0) {
-                // cada que se alcance el objetivo de pagos, aumentar el porcentaje
-                percentageSplit.actual += percentageSplit.toIncrease; // aumentar el porcentaje
-                payCounter = 0; // reiniciar el contador
+                /// @notice Increase the actual percentage by the defined increment and reset the counter.
+                percentageSplit.actual += percentageSplit.toIncrease;
+                payCounter = 0;
             }
         }
 
-        // calcular la cantidad para el creador
+        /**
+         * @notice Calculate the share for the creator and the remaining amount
+         * to be divided among the sub-splits for every contributor defined
+         * in the `subSplits` array.
+         */
         amountToBeRetiredForCreator += getCreatorShare(msg.value);
-
-        // calcular la cantidad para los sub-splits
         uint256[] memory calculatedShares = getAllSubSplitShares(msg.value);
-
-        // comienza a dividir el monto entre los sub-splits
         for (uint256 i = 0; i < subSplits.length; i++) {
             subSplits[i].amountToBeRetired += calculatedShares[i];
         }
-
-        // mintar el NFT
         NFT(tokenAddress).safeMint(_to);
     }
 
-    // --- Funciones View de Cálculo ---
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Calculation Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     /**
-     * @notice Calcula la porción que le corresponde al dueño del link de referido (creador).
-     * @param _totalAmount El monto total (en unidades atómicas del token) a dividir.
-     * @return amountForCreator La cantidad (en unidades atómicas) para el creador.
+     *  @notice Calculate the share for the creator based on the total amount.
+     *  @param _totalAmount The total amount (in atomic units of the token) to be divided.
+     *  @return amountForCreator The amount (in atomic units) for the creator.
      */
     function getCreatorShare(
         uint256 _totalAmount
     ) public view returns (uint256 amountForCreator) {
+        /**
+         * @notice Calculate the amount for the creator based on the actual percentage split.
+         * The calculation is done by multiplying the total amount by the actual percentage split
+         * and dividing it by the denominator (10000).
+         */
         amountForCreator =
             (_totalAmount * percentageSplit.actual) /
             BPS_DENOMINATOR;
@@ -130,29 +142,33 @@ contract DynamicSplitter is VotingMechanism {
     }
 
     /**
-     * @notice Calcula las porciones para todos los integrantes del sub-split listados en `subSplits`.
-     * Estas porciones se calculan sobre el monto restante DESPUÉS de la parte del creador.
-     * @param _totalAmount El monto total (en unidades atómicas del token) a dividir.
-     * @return calculatedShares Un array con las direcciones y las cantidades calculadas
-     * para cada integrante del array `subSplits`.
+     * @notice Calculates the shares for all sub-split members listed in `subSplits`.
+     * These shares are calculated based on the remaining amount AFTER the creator's share.
+     * @param _totalAmount The total amount (in atomic units of the token) to be divided.
+     * @return calculatedShares An array containing the addresses and calculated amounts
+     * for each member in the `subSplits` array.
      */
     function getAllSubSplitShares(
         uint256 _totalAmount
     ) public view returns (uint256[] memory calculatedShares) {
-        // 1. Calcular cuánto se lleva el creador del link de referido.
+        
+        /**
+         * @notice Calculate the amount for the creator first.
+         * This amount is subtracted from the total amount to determine the remaining
+         * amount that will be divided among the sub-splits.
+         * @dev The creator's share is calculated based on the actual percentage split.
+         */
         uint256 amountForCreator = getCreatorShare(_totalAmount);
-
-        // 2. Determinar el monto restante que se dividirá entre los `subSplits`.
         uint256 remainingAmountForSubSplits = _totalAmount - amountForCreator;
-
-        // Preparar el array de resultados.
         calculatedShares = new uint256[](subSplits.length);
 
-        // 3. Iterar sobre la lista `subSplits` y calcular la parte de cada uno.
+        /**
+         * @notice Iterate through each sub-split member and calculate their individual share.
+         * The share is calculated based on the remaining amount after the creator's share has been deducted.
+         */
         for (uint256 i = 0; i < subSplits.length; i++) {
             SubSplitMetadata storage currentSubSplit = subSplits[i];
 
-            // El `currentSubSplit.percentage` se aplica sobre el `remainingAmountForSubSplits`.
             uint256 individualShareAmount = (remainingAmountForSubSplits *
                 currentSubSplit.percentage) / BPS_DENOMINATOR;
 
@@ -162,7 +178,7 @@ contract DynamicSplitter is VotingMechanism {
         return calculatedShares;
     }
 
-    // funciones de retiro
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Withdrawal Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     function creatorWithdraw() public {
         if (msg.sender != creator) {
@@ -186,10 +202,12 @@ contract DynamicSplitter is VotingMechanism {
         }
     }
 
-    // funciones de votación
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Vote Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
-    // cuando se ha hecho una propuesta de votación se llama a esta función
-    // para efectuar el sufrágio de la votación
+    /**
+     *  @notice Allows a user to vote on a proposal (only if there is an ongoing vote).
+     *  @param answer The user's vote, true for 'yes' and false for 'no'.
+     */
     function voteProposal(bool answer) external {
         _vote(answer);
     }
@@ -202,6 +220,15 @@ contract DynamicSplitter is VotingMechanism {
     // - cambiar el percentageSplit.toIncrease
     // ya no se puedan hacer y esta decisión es permanente
 
+    /**
+     * @notice This function proposes a vote to explode the fuse,
+     * meaning that all decisions regarding
+     * - changing the maximum split percentage
+     * - increasing the split percentage
+     * - changing the goal for increasing the percentage
+     * - changing the percentageSplit.toIncrease
+     * will no longer be possible and this decision is permanent.
+     */
     function proposeExplodeFuse() external {
         _proposeVote(0x01, 0);
     }
@@ -210,13 +237,21 @@ contract DynamicSplitter is VotingMechanism {
         _execute(0x01);
     }
 
-    // votaciones para aumentar el máximo porcentaje de split (id: 0x02)
+    /**
+     * @notice Proposes a new maximum percentage split.
+     * @dev This proposal has an ID of 0x02 and allows the community to vote on changing the maximum percentage split.
+     * @param newMaxPercentageSplit The new maximum percentage split to be proposed.
+     */
     function proposeNewMaxPercentageSplit(
         uint16 newMaxPercentageSplit
     ) external {
         _proposeVote(0x02, uint256(newMaxPercentageSplit));
     }
 
+    /**
+     * @notice Executes the proposal to change the maximum percentage split.
+     * @dev This function checks if the vote was successful and updates the maximum percentage split accordingly.
+     */
     function executeNewMaxPercentageSplit() external {
         // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
         (bool answer, uint256 dataToChange) = _execute(0x02);
@@ -225,13 +260,21 @@ contract DynamicSplitter is VotingMechanism {
         }
     }
 
-    // votaciones para cambiar el goalForIncreasePercentage (id: 0x03)
+    /**
+     * @notice Proposes a new goal for increasing the percentage split.
+     * @dev This proposal has an ID of 0x03 and allows the community to vote on changing the goal for increasing the percentage split.
+     * @param newGoalForIncreasePercentage The new goal for increasing the percentage split to be proposed.
+     */
     function proposeNewGoalForIncreasePercentage(
         uint256 newGoalForIncreasePercentage
     ) external {
         _proposeVote(0x03, newGoalForIncreasePercentage);
     }
 
+    /**
+     * @notice Executes the proposal to change the goal for increasing the percentage split.
+     * @dev This function checks if the vote was successful and updates the goal for increasing the percentage split accordingly.
+     */
     function executeNewGoalForIncreasePercentage() external {
         (bool answer, uint256 dataToChange) = _execute(0x03);
         if (answer) {
@@ -239,13 +282,21 @@ contract DynamicSplitter is VotingMechanism {
         }
     }
 
-    // votaciones para cambiar el percentageSplit.toIncrease por goal (id: 0x04)
+    /**
+     * @notice Proposes a new percentage split to increase.
+     * @dev This proposal has an ID of 0x04 and allows the community to vote on changing the percentage split to increase.
+     * @param newPercentageSplitToIncrease The new percentage split to increase to be proposed.
+     */
     function proposeNewPercentageSplitToIncrease(
         uint16 newPercentageSplitToIncrease
     ) external {
         _proposeVote(0x04, uint256(newPercentageSplitToIncrease));
     }
 
+    /**
+     * @notice Executes the proposal to change the percentage split to increase.
+     * @dev This function checks if the vote was successful and updates the percentage split to increase accordingly.
+     */
     function executeNewPercentageSplitToIncrease() external {
         // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
         (bool answer, uint256 dataToChange) = _execute(0x02);
@@ -253,4 +304,53 @@ contract DynamicSplitter is VotingMechanism {
             percentageSplit.toIncrease = uint16(dataToChange);
         }
     }
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Getters Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    function getSubSplits()
+        external
+        view
+        returns (SubSplitMetadata[] memory)
+    {
+        return subSplits;
+    }
+    function getMembersOfSubSplit(
+    ) external view returns (address[] memory membersOfSubSplit) {
+        for (uint256 i = 0; i < subSplits.length; i++) {
+            membersOfSubSplit[i] = subSplits[i].account;
+        }
+    }
+    function getPercentageSplit()
+        external
+        view
+        returns (PercentageSplitMetadata memory)
+    {
+        return percentageSplit;
+    }
+    function getCreator() external view returns (address) {
+        return creator;
+    }
+    function getTokenAddress() external view returns (address) {
+        return tokenAddress;
+    }
+    function getPricePerMint() external view returns (uint256) {
+        return pricePerMint;
+    }
+    function getAmountToBeRetiredForCreator()
+        external
+        view
+        returns (uint256)
+    {
+        return amountToBeRetiredForCreator;
+    }
+    function getPayCounter() external view returns (uint256) {
+        return payCounter;
+    }
+    function getGoalForIncreasePercentage()
+        external
+        view
+        returns (uint256)
+    {
+        return goalForIncreasePercentage;
+    }
+
 }
