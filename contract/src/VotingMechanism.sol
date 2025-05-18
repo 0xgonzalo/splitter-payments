@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 abstract contract VotingMechanism {
-    // --- Errors ---
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Errors ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     error VoteFuseExploded();
     error OngoingVote(bytes1 decisionID);
     error AddressNotAllowedToPropose();
@@ -12,16 +12,17 @@ abstract contract VotingMechanism {
     error DiferentDecisionID(bytes1 decisionID);
     error NotEnoughVotesToExecute();
 
-    // --- Events ---
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Events ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     event VoteProposed(bytes1 decisionID, uint256 proposal);
     event VoteCast(address indexed voter, bool approve);
     event VoteExecuted(bytes1 decisionID, bool answer);
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Structures ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     struct VoterMetadata {
         bytes1 hasVoted;
         bytes1 isAllowed;
     }
-
     struct BallotBoxMetadata {
         bytes1 decicionID;
         uint256 proposal;
@@ -30,10 +31,14 @@ abstract contract VotingMechanism {
         uint256 cancelVoteAmount;
     }
 
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Variables ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
     bytes1 fuse;
     BallotBoxMetadata ballotBox;
     mapping(address => VoterMetadata) voter;
     address[] internal voterAddresses;
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Modifiers ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     modifier checkVoteFuse() {
         if (fuse == bytes1(0x00)) {
@@ -53,6 +58,11 @@ abstract contract VotingMechanism {
         }
     }
 
+    /**
+     *  @notice Proposes a vote with a decision ID and a proposal.
+     *  @param decisionID The decision ID for the vote (0x01 for explode fuse, 0x02 for change proposal).
+     *  @param proposal The proposal to be voted on, which can be a new fuse value or a new proposal value.
+     */
     function _proposeVote(
         bytes1 decisionID,
         uint256 proposal
@@ -76,6 +86,10 @@ abstract contract VotingMechanism {
         emit VoteProposed(decisionID, proposal);
     }
 
+    /**
+     *  @notice Casts a vote for the current ongoing vote.
+     *  @param answer The answer to the vote (true for approve, false for cancel).
+     */
     function _vote(bool answer) internal {
         if (ballotBox.decicionID == 0x00) {
             revert NoOngoingVote();
@@ -101,6 +115,12 @@ abstract contract VotingMechanism {
         emit VoteCast(msg.sender, answer);
     }
 
+    /**
+     *  @notice Executes the vote based on the decision ID.
+     *  @param decisionID The decision ID for the vote (0x01 for explode fuse, 0x02 for change proposal).
+     *  @return successful A boolean indicating if the vote was successful (unanimous).
+     *  @return proposalToChange The proposal that was voted on.
+     */
     function _execute(
         bytes1 decisionID
     ) internal returns (bool successful, uint256 proposalToChange) {
@@ -138,12 +158,10 @@ abstract contract VotingMechanism {
         emit VoteExecuted(decisionID, successful);
     }
 
-    // internal getters
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Internal Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     function userAlreadyVoted() internal view returns (bool) {
         return voter[msg.sender].hasVoted == 0x01;
     }
-
-    // getters
 
     function imAllowedToVote() internal view returns (bool) {
         return voter[msg.sender].isAllowed == 0x01;

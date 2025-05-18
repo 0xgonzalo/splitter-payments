@@ -5,6 +5,8 @@ import {VotingMechanism} from "./VotingMechanism.sol";
 import {NFT} from "./NFT.sol";
 
 contract DynamicSplitter is VotingMechanism {
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Structures ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     struct SubSplitMetadata {
         address account;
         uint16 percentage;
@@ -16,6 +18,8 @@ contract DynamicSplitter is VotingMechanism {
         uint16 max;
         uint16 toIncrease;
     }
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Variables ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     uint16 constant BPS_DENOMINATOR = 10000; // 100% in Basis Points
 
@@ -78,7 +82,7 @@ contract DynamicSplitter is VotingMechanism {
         );
     }
 
-    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Payment Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Payment Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     /**
      *  @notice Allows a user to make a payment to mint an NFT.
@@ -120,7 +124,7 @@ contract DynamicSplitter is VotingMechanism {
         NFT(tokenAddress).safeMint(_to);
     }
 
-    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Calculation Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Calculation Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     /**
      *  @notice Calculate the share for the creator based on the total amount.
@@ -178,7 +182,7 @@ contract DynamicSplitter is VotingMechanism {
         return calculatedShares;
     }
 
-    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Withdrawal Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Withdrawal Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     function creatorWithdraw() public {
         if (msg.sender != creator) {
@@ -202,7 +206,7 @@ contract DynamicSplitter is VotingMechanism {
         }
     }
 
-    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Vote Functions▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Vote Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
     /**
      *  @notice Allows a user to vote on a proposal (only if there is an ongoing vote).
@@ -211,14 +215,6 @@ contract DynamicSplitter is VotingMechanism {
     function voteProposal(bool answer) external {
         _vote(answer);
     }
-
-    // votacion para explotar el fuse (id: 0x01)
-    // es decir que las deciciones de
-    // - cambiar el porcentaje máximo de split
-    // - aumentar el porcentaje de split
-    // - cambiar el goalForIncreasePercentage
-    // - cambiar el percentageSplit.toIncrease
-    // ya no se puedan hacer y esta decisión es permanente
 
     /**
      * @notice This function proposes a vote to explode the fuse,
@@ -233,6 +229,10 @@ contract DynamicSplitter is VotingMechanism {
         _proposeVote(0x01, 0);
     }
 
+    /**
+     * @notice Executes the proposal to explode the fuse.
+     * @dev This function checks if the vote was successful and updates the fuse accordingly.
+     */
     function executeExplodeFuse() external {
         _execute(0x01);
     }
@@ -305,7 +305,7 @@ contract DynamicSplitter is VotingMechanism {
         }
     }
 
-    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄Getters Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Getters Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     function getSubSplits()
         external
         view
