@@ -3,35 +3,31 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {SplitterFactory} from "@splitter/contracts/SplitterFactory.sol";
-import {SplitterDynamic} from "@splitter/contracts/SplitterDynamic.sol";
+import {SplitterStatic} from "@splitter/contracts/SplitterStatic.sol";
 import {NFT} from "@splitter/contracts/NFT.sol";
 import {Constants} from "./Constants.sol";
 
-contract SplitterDynamicUnitTest is Test, Constants {
+contract SplitterStaticUnitTest is Test, Constants {
     SplitterFactory factory;
-    SplitterDynamic splitter;
+    SplitterStatic splitter;
     NFT nft;
 
     uint256 constant AMOUNT_TO_PAY = 0.001 ether;
-    uint256 goalToIncreasePercentage = 10;
 
     function setUp() public {
         factory = new SplitterFactory();
-        address splitterAddress = factory.createDynamicSplitter(
+        address splitterAddress = factory.createStaticSplitter(
             CREATOR.Address,
             "testSplitter",
             "TST",
             "https://example.com/",
             AMOUNT_TO_PAY,
             1500, // 15.00%
-            1700, // 17.00%
-            100, // 1.00%
-            goalToIncreasePercentage,
             false, // non-permanent
             addressesToSplit,
             percentagesToSplit
         );
-        splitter = SplitterDynamic(splitterAddress);
+        splitter = SplitterStatic(splitterAddress);
         nft = NFT(splitter.getTokenAddress());
     }
 
@@ -63,7 +59,7 @@ contract SplitterDynamicUnitTest is Test, Constants {
 
         uint256 amountCreator = splitter.getAmountToBeRetiredForCreator();
 
-        SplitterDynamic.SubSplitMetadata[] memory subSplits = splitter
+        SplitterStatic.SubSplitMetadata[] memory subSplits = splitter
             .getSubSplits();
 
         uint256 totalAllSplits = amountCreator;
@@ -164,54 +160,6 @@ contract SplitterDynamicUnitTest is Test, Constants {
         }
     }
 
-    function test_paymentToIncreasePercentage() public {
-        vm.deal(COMMON_USER1.Address, AMOUNT_TO_PAY * goalToIncreasePercentage);
-        uint16 initialPercentage = splitter.getPercentageSplit().actual;
-
-        for (uint256 i = 0; i < goalToIncreasePercentage; i++) {
-            vm.startPrank(COMMON_USER1.Address);
-            splitter.makePayment{value: AMOUNT_TO_PAY}(COMMON_USER1.Address);
-            vm.stopPrank();
-        }
-
-        uint16 finalPercentage = splitter.getPercentageSplit().actual;
-
-        assertEq(
-            finalPercentage,
-            initialPercentage + splitter.getPercentageSplit().toIncrease,
-            "Final percentage should increase by the defined amount"
-        );
-    }
-
-    function test_paymentToIncreasePercentageToMax() public {
-        uint256 numberOfPaymentsToMax = (goalToIncreasePercentage *
-            (splitter.getPercentageSplit().max -
-                splitter.getPercentageSplit().actual));
-
-        vm.deal(
-            COMMON_USER1.Address,
-            AMOUNT_TO_PAY * (numberOfPaymentsToMax + goalToIncreasePercentage)
-        );
-
-        for (
-            uint256 i = 0;
-            i < numberOfPaymentsToMax + goalToIncreasePercentage;
-            i++
-        ) {
-            vm.startPrank(COMMON_USER1.Address);
-            splitter.makePayment{value: AMOUNT_TO_PAY}(COMMON_USER1.Address);
-            vm.stopPrank();
-        }
-
-        uint16 finalPercentage = splitter.getPercentageSplit().actual;
-
-        assertEq(
-            finalPercentage,
-            splitter.getPercentageSplit().max,
-            "Final percentage should reach the maximum defined percentage"
-        );
-    }
-
     function test_vote_exploteFuse_cancelAction() public {
         vm.startPrank(CONTRIBUTOR3.Address);
         splitter.proposeExplodeFuse();
@@ -279,9 +227,9 @@ contract SplitterDynamicUnitTest is Test, Constants {
         );
     }
 
-    function test_vote_NewMaxPercentageSplit_cancelAction() public {
+    function test_vote_NewPercentageSplit_cancelAction() public {
         vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.proposeNewMaxPercentageSplit(
+        splitter.proposeNewPercentageSplit(
             5000 // 50.00%
         );
         vm.stopPrank();
@@ -299,7 +247,7 @@ contract SplitterDynamicUnitTest is Test, Constants {
         }
 
         vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.executeNewMaxPercentageSplit();
+        splitter.executeNewPercentageSplit();
         vm.stopPrank();
 
         assertEq(
@@ -309,15 +257,15 @@ contract SplitterDynamicUnitTest is Test, Constants {
         );
 
         assertEq(
-            splitter.getPercentageSplit().max,
-            1700, // 17.00%
-            "Max percentage split should remain unchanged after cancel action"
+            splitter.getPercentageSplit(),
+            1500, // 15.00%
+            "percentage split should remain unchanged after cancel action"
         );
     }
 
-    function test_vote_NewMaxPercentageSplit_executeAction() public {
+    function test_vote_NewPercentageSplit_executeAction() public {
         vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.proposeNewMaxPercentageSplit(
+        splitter.proposeNewPercentageSplit(
             5000 // 50.00%
         );
         vm.stopPrank();
@@ -335,7 +283,7 @@ contract SplitterDynamicUnitTest is Test, Constants {
         }
 
         vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.executeNewMaxPercentageSplit();
+        splitter.executeNewPercentageSplit();
         vm.stopPrank();
 
         assertEq(
@@ -344,147 +292,9 @@ contract SplitterDynamicUnitTest is Test, Constants {
             "Decision ID should be reset to 0x00 after execute action"
         );
         assertEq(
-            splitter.getPercentageSplit().max,
+            splitter.getPercentageSplit(),
             5000, // 50.00%
-            "Max percentage split should be updated after execute action"
-        );
-    }
-
-    function test_vote_NewGoalForIncreasePercentage_cancelAction() public {
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.proposeNewGoalForIncreasePercentage(200);
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x03),
-            "Decision ID should be 0x03 for new goal for increase percentage"
-        );
-
-        for (uint256 i = 0; i < addressesToSplit.length; i++) {
-            vm.startPrank(addressesToSplit[i]);
-            splitter.voteProposal((i % 2) == 1);
-            vm.stopPrank();
-        }
-
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.executeNewGoalForIncreasePercentage();
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x00),
-            "Decision ID should be reset to 0x00 after cancel action"
-        );
-
-        assertEq(
-            splitter.getGoalForIncreasePercentage(),
-            goalToIncreasePercentage,
-            "Goal for increase percentage should remain unchanged after cancel action"
-        );
-    }
-
-    function test_vote_NewGoalForIncreasePercentage_executeAction() public {
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.proposeNewGoalForIncreasePercentage(200);
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x03),
-            "Decision ID should be 0x03 for new goal for increase percentage"
-        );
-
-        for (uint256 i = 0; i < addressesToSplit.length; i++) {
-            vm.startPrank(addressesToSplit[i]);
-            splitter.voteProposal(true);
-            vm.stopPrank();
-        }
-
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.executeNewGoalForIncreasePercentage();
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x00),
-            "Decision ID should be reset to 0x00 after execute action"
-        );
-        assertEq(
-            splitter.getGoalForIncreasePercentage(),
-            200,
-            "Goal for increase percentage should be updated after execute action"
-        );
-    }
-
-    function test_vote_NewPercentageSplitToIncrease_cancelAction() public {
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.proposeNewPercentageSplitToIncrease(
-            200 // 2.00%
-        );
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x04),
-            "Decision ID should be 0x04 for new percentage split to increase"
-        );
-
-        for (uint256 i = 0; i < addressesToSplit.length; i++) {
-            vm.startPrank(addressesToSplit[i]);
-            splitter.voteProposal((i % 2) == 1);
-            vm.stopPrank();
-        }
-
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.executeNewPercentageSplitToIncrease();
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x00),
-            "Decision ID should be reset to 0x00 after cancel action"
-        );
-
-        assertEq(
-            splitter.getPercentageSplit().toIncrease,
-            100, // 1.00%
-            "Goal for increase percentage should remain unchanged after cancel action"
-        );
-    }
-
-    function test_vote_NewPercentageSplitToIncrease_executeAction() public {
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.proposeNewPercentageSplitToIncrease(
-            200 // 2.00%
-        );
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x04),
-            "Decision ID should be 0x04 for new percentage split to increase"
-        );
-
-        for (uint256 i = 0; i < addressesToSplit.length; i++) {
-            vm.startPrank(addressesToSplit[i]);
-            splitter.voteProposal(true);
-            vm.stopPrank();
-        }
-
-        vm.startPrank(CONTRIBUTOR3.Address);
-        splitter.executeNewPercentageSplitToIncrease();
-        vm.stopPrank();
-
-        assertEq(
-            uint8(splitter.getBallotBoxMetadata().decicionID),
-            uint8(0x00),
-            "Decision ID should be reset to 0x00 after execute action"
-        );
-        assertEq(
-            splitter.getPercentageSplit().toIncrease,
-            200, // 2.00%
-            "Goal for increase percentage should be updated after execute action"
+            "percentage split should be updated after execute action"
         );
     }
 }

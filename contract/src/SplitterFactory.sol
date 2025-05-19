@@ -20,6 +20,7 @@
 pragma solidity ^0.8.13;
 
 import {SplitterDynamic} from "@splitter/contracts/SplitterDynamic.sol";
+import {SplitterStatic} from "@splitter/contracts/SplitterStatic.sol";
 
 contract SplitterFactory {
     function createDynamicSplitter(
@@ -34,8 +35,8 @@ contract SplitterFactory {
         uint16 _toIncreasePercentageSplit,
         uint256 _goalForIncreasePercentage,
         bool setToPermanent,
-        address[] memory _addressToSplit,
-        uint16[] memory _percentageToSplit
+        address[] memory _membersAddressesForSubSplit,
+        uint16[] memory _membersPercentagesForSubSplit
     ) public returns (address splitter) {
         splitter = address(
             new SplitterDynamic(
@@ -49,8 +50,34 @@ contract SplitterFactory {
                 _toIncreasePercentageSplit,
                 _goalForIncreasePercentage,
                 setToPermanent,
-                _addressToSplit,
-                _percentageToSplit
+                _membersAddressesForSubSplit,
+                _membersPercentagesForSubSplit
+            )
+        );
+    }
+
+    function createStaticSplitter(
+        address _creator,
+        string memory _name,
+        string memory _symbol,
+        string memory _baseURI,
+        uint256 _pricePerMint,
+        uint16 _percentageToSplit,
+        bool setToPermanent,
+        address[] memory _membersAddressesForSubSplit,
+        uint16[] memory _membersPercentagesForSubSplit
+    ) public returns (address splitter) {
+        splitter = address(
+            new SplitterStatic(
+                _creator,
+                _name,
+                _symbol,
+                _baseURI,
+                _pricePerMint,
+                _percentageToSplit,
+                setToPermanent,
+                _membersAddressesForSubSplit,
+                _membersPercentagesForSubSplit
             )
         );
     }

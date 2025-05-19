@@ -7,3 +7,7 @@ deploy:
 unitTestSplitterDynamic:
 	@echo "Running SplitterDynamic unit tests"
 	@forge test --match-path test/SplitterDynamicUnitTest.t.sol --summary --detailed --gas-report -vvv --show-progress
+
+unitTestSplitterStatic:
+	@echo "Running SplitterStatic unit tests"
+	@forge test --match-path test/SplitterStaticUnitTest.t.sol --summary --detailed --gas-report -vvv --show-progress
