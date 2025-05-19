@@ -15,10 +15,23 @@
  */
 pragma solidity ^0.8.13;
 
-import {VotingMechanism} from "./VotingMechanism.sol";
-import {NFT} from "./NFT.sol";
+import {VotingMechanism} from "@splitter/contracts/VotingMechanism.sol";
+import {NFT} from "@splitter/contracts/NFT.sol";
 
-contract DynamicSplitter is VotingMechanism {
+contract SplitterDynamic is VotingMechanism {
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ errors ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
+    error InvalidPaymentAmount();
+    error CreatorCannotMakePayment();
+    error OnlyCreatorCanExecute();
+    error OnlyMemberCanExecute();
+    error TransferFailed();
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ events ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
+    event PercentageSplitIncreased(uint16 newPercentage);
+    event PaymentMade(address indexed user, uint256 tokenId);
+    event WithdrawalMade(address indexed account, uint256 amount);
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Structures ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     struct SubSplitMetadata {
@@ -61,20 +74,20 @@ contract DynamicSplitter is VotingMechanism {
         uint16 _toIncreasePercentageSplit,
         uint256 _goalForIncreasePercentage,
         bool setToPermanent,
-        address[] memory _addressToSplit,
-        uint16[] memory _percentageToSplit
-    ) VotingMechanism(setToPermanent, _addressToSplit) {
+        address[] memory _membersAddressesForSubSplit,
+        uint16[] memory _membersPercentagesForSubSplit
+    ) VotingMechanism(setToPermanent, _membersAddressesForSubSplit) {
         uint256 sumSubSplitPercentages = 0;
 
-        for (uint256 i = 0; i < _percentageToSplit.length; i++) {
+        for (uint256 i = 0; i < _membersPercentagesForSubSplit.length; i++) {
             subSplits.push(
                 SubSplitMetadata({
-                    account: _addressToSplit[i],
-                    percentage: _percentageToSplit[i],
+                    account: _membersAddressesForSubSplit[i],
+                    percentage: _membersPercentagesForSubSplit[i],
                     amountToBeRetired: 0
                 })
             );
-            sumSubSplitPercentages += _percentageToSplit[i];
+            sumSubSplitPercentages += _membersPercentagesForSubSplit[i];
         }
 
         if (sumSubSplitPercentages != BPS_DENOMINATOR) {
@@ -104,13 +117,10 @@ contract DynamicSplitter is VotingMechanism {
      *  @dev The function checks if the sender is the creator, validates the payment amount,
      *  and updates the split percentages based on the number of payments made.
      */
-    function makePayment(address _to) public payable {
-        if (msg.sender == creator) {
-            revert();
-        }
-        if (msg.value != pricePerMint) {
-            revert();
-        }
+    function makePayment(address _to) public payable returns (uint256 tokenId) {
+        if (msg.value != pricePerMint) revert InvalidPaymentAmount();
+
+        if (msg.sender == creator) revert CreatorCannotMakePayment();
 
         // si todavía no se ha alcanzado el límite
         /// @notice Check if the current percentage is less than the maximum allowed percentage.
@@ -122,6 +132,8 @@ contract DynamicSplitter is VotingMechanism {
                 /// @notice Increase the actual percentage by the defined increment and reset the counter.
                 percentageSplit.actual += percentageSplit.toIncrease;
                 payCounter = 0;
+
+                emit PercentageSplitIncreased(percentageSplit.actual);
             }
         }
 
@@ -135,7 +147,10 @@ contract DynamicSplitter is VotingMechanism {
         for (uint256 i = 0; i < subSplits.length; i++) {
             subSplits[i].amountToBeRetired += calculatedShares[i];
         }
-        NFT(tokenAddress).safeMint(_to);
+
+        tokenId = NFT(tokenAddress).safeMint(_to);
+
+        emit PaymentMade(msg.sender, tokenId);
     }
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Calculation Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
@@ -169,7 +184,6 @@ contract DynamicSplitter is VotingMechanism {
     function getAllSubSplitShares(
         uint256 _totalAmount
     ) public view returns (uint256[] memory calculatedShares) {
-        
         /**
          * @notice Calculate the amount for the creator first.
          * This amount is subtracted from the total amount to determine the remaining
@@ -200,27 +214,45 @@ contract DynamicSplitter is VotingMechanism {
 
     function creatorWithdraw() public {
         if (msg.sender != creator) {
-            revert("Only the creator can withdraw.");
+            revert OnlyCreatorCanExecute();
         }
         (bool success, ) = creator.call{value: amountToBeRetiredForCreator}("");
-        require(success, "Transfer failed.");
+
+        if (!success) {
+            revert TransferFailed();
+        }
+
         amountToBeRetiredForCreator = 0;
+
+        emit WithdrawalMade(creator, amountToBeRetiredForCreator);
     }
 
     function withdraw() public {
+        if (!_isMember(msg.sender)) {
+            revert OnlyMemberCanExecute();
+        }
+
         for (uint256 i = 0; i < subSplits.length; i++) {
             (bool success, ) = subSplits[i].account.call{
                 value: subSplits[i].amountToBeRetired
             }("");
 
             subSplits[i].amountToBeRetired = 0;
+
             if (!success) {
-                revert("Transfer failed.");
+                revert TransferFailed();
             }
+
+            emit WithdrawalMade(
+                subSplits[i].account,
+                subSplits[i].amountToBeRetired
+            );
         }
     }
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Vote Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
+    /// @dev all voting functions are inherited from VotingMechanism
 
     /**
      *  @notice Allows a user to vote on a proposal (only if there is an ongoing vote).
@@ -313,26 +345,25 @@ contract DynamicSplitter is VotingMechanism {
      */
     function executeNewPercentageSplitToIncrease() external {
         // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
-        (bool answer, uint256 dataToChange) = _execute(0x02);
+        (bool answer, uint256 dataToChange) = _execute(0x04);
         if (answer) {
             percentageSplit.toIncrease = uint16(dataToChange);
         }
     }
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Getters Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
-    function getSubSplits()
-        external
-        view
-        returns (SubSplitMetadata[] memory)
-    {
+    function getSubSplits() external view returns (SubSplitMetadata[] memory) {
         return subSplits;
     }
-    function getMembersOfSubSplit(
-    ) external view returns (address[] memory membersOfSubSplit) {
+
+    function getMembersOfSubSplit() external view returns (address[] memory) {
+        address[] memory membersOfSubSplit = new address[](subSplits.length);
         for (uint256 i = 0; i < subSplits.length; i++) {
             membersOfSubSplit[i] = subSplits[i].account;
         }
+        return membersOfSubSplit;
     }
+
     function getPercentageSplit()
         external
         view
@@ -340,31 +371,75 @@ contract DynamicSplitter is VotingMechanism {
     {
         return percentageSplit;
     }
+
     function getCreator() external view returns (address) {
         return creator;
     }
+
     function getTokenAddress() external view returns (address) {
         return tokenAddress;
     }
+
     function getPricePerMint() external view returns (uint256) {
         return pricePerMint;
     }
-    function getAmountToBeRetiredForCreator()
-        external
-        view
-        returns (uint256)
-    {
+
+    function getAmountToBeRetiredForCreator() external view returns (uint256) {
         return amountToBeRetiredForCreator;
     }
+
     function getPayCounter() external view returns (uint256) {
         return payCounter;
     }
-    function getGoalForIncreasePercentage()
-        external
-        view
-        returns (uint256)
-    {
+
+    function getGoalForIncreasePercentage() external view returns (uint256) {
         return goalForIncreasePercentage;
     }
 
+    function getSubSplitByIndex(
+        uint256 index
+    ) external view returns (SubSplitMetadata memory) {
+        require(index < subSplits.length, "Index out of bounds");
+        return subSplits[index];
+    }
+
+    function getSubSplitByAddress(
+        address account
+    ) external view returns (SubSplitMetadata memory, bool) {
+        for (uint256 i = 0; i < subSplits.length; i++) {
+            if (subSplits[i].account == account) {
+                return (subSplits[i], true);
+            }
+        }
+        return (SubSplitMetadata(address(0), 0, 0), false);
+    }
+
+    function getPendingAmountsForSubSplits()
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory pendingAmounts = new uint256[](subSplits.length);
+        for (uint256 i = 0; i < subSplits.length; i++) {
+            pendingAmounts[i] = subSplits[i].amountToBeRetired;
+        }
+        return pendingAmounts;
+    }
+
+    function isSubSplitMember(address account) external view returns (bool) {
+        for (uint256 i = 0; i < subSplits.length; i++) {
+            if (subSplits[i].account == account) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function getTotalSubSplitPercentage() external view returns (uint16) {
+        uint16 totalPercentage = 0;
+        for (uint256 i = 0; i < subSplits.length; i++) {
+            totalPercentage += subSplits[i].percentage;
+        }
+        return totalPercentage;
+    }
 }

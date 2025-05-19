@@ -191,4 +191,8 @@ abstract contract VotingMechanism {
     function imAllowedToVote() internal view returns (bool) {
         return voter[msg.sender].isAllowed == 0x01;
     }
+
+    function _isMember(address _user) internal view returns (bool) {
+        return voter[_user].isAllowed == 0x01;
+    }
 }

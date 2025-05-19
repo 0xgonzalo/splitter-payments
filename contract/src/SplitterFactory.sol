@@ -19,7 +19,7 @@
  */
 pragma solidity ^0.8.13;
 
-import {DynamicSplitter} from "./DynamicSplitter.sol";
+import {SplitterDynamic} from "@splitter/contracts/SplitterDynamic.sol";
 
 contract SplitterFactory {
     function createDynamicSplitter(
@@ -38,7 +38,7 @@ contract SplitterFactory {
         uint16[] memory _percentageToSplit
     ) public returns (address splitter) {
         splitter = address(
-            new DynamicSplitter(
+            new SplitterDynamic(
                 _creator,
                 _name,
                 _symbol,
