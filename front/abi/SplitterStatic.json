@@ -1,0 +1,450 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        { "name": "_creator", "type": "address", "internalType": "address" },
+        { "name": "_name", "type": "string", "internalType": "string" },
+        { "name": "_symbol", "type": "string", "internalType": "string" },
+        { "name": "_baseURI", "type": "string", "internalType": "string" },
+        {
+          "name": "_pricePerMint",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_percentageToSplit",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        { "name": "setToPermanent", "type": "bool", "internalType": "bool" },
+        {
+          "name": "_membersAddressesForSubSplit",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_membersPercentagesForSubSplit",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "creatorWithdraw",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "executeExplodeFuse",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "executeNewPercentageSplit",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getAllSubSplitShares",
+      "inputs": [
+        { "name": "_totalAmount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "calculatedShares",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getAmountToBeRetiredForCreator",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getBallotBoxMetadata",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct VotingMechanism.BallotBoxMetadata",
+          "components": [
+            {
+              "name": "decicionID",
+              "type": "bytes1",
+              "internalType": "bytes1"
+            },
+            {
+              "name": "proposal",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "totalOfVotes",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "executeVoteAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "cancelVoteAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getCreator",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getCreatorShare",
+      "inputs": [
+        { "name": "_totalAmount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "amountForCreator",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getFuse",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "bytes1", "internalType": "bytes1" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getMembersOfSubSplit",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getPendingAmountsForSubSplits",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "uint256[]", "internalType": "uint256[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getPercentageSplit",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint16", "internalType": "uint16" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getPricePerMint",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getSubSplitByAddress",
+      "inputs": [
+        { "name": "account", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct SplitterStatic.SubSplitMetadata",
+          "components": [
+            { "name": "account", "type": "address", "internalType": "address" },
+            {
+              "name": "percentage",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "amountToBeRetired",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        { "name": "", "type": "bool", "internalType": "bool" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getSubSplitByIndex",
+      "inputs": [
+        { "name": "index", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct SplitterStatic.SubSplitMetadata",
+          "components": [
+            { "name": "account", "type": "address", "internalType": "address" },
+            {
+              "name": "percentage",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "amountToBeRetired",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getSubSplits",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple[]",
+          "internalType": "struct SplitterStatic.SubSplitMetadata[]",
+          "components": [
+            { "name": "account", "type": "address", "internalType": "address" },
+            {
+              "name": "percentage",
+              "type": "uint16",
+              "internalType": "uint16"
+            },
+            {
+              "name": "amountToBeRetired",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getTokenAddress",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getTotalSubSplitPercentage",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint16", "internalType": "uint16" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isSubSplitMember",
+      "inputs": [
+        { "name": "account", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "makePayment",
+      "inputs": [
+        { "name": "_to", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        { "name": "tokenId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "proposeExplodeFuse",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "proposeNewPercentageSplit",
+      "inputs": [
+        {
+          "name": "newPercentageSplit",
+          "type": "uint16",
+          "internalType": "uint16"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "voteProposal",
+      "inputs": [{ "name": "answer", "type": "bool", "internalType": "bool" }],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdraw",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "PaymentMade",
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "tokenId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "VoteCast",
+      "inputs": [
+        {
+          "name": "voter",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "approve",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "VoteExecuted",
+      "inputs": [
+        {
+          "name": "decisionID",
+          "type": "bytes1",
+          "indexed": false,
+          "internalType": "bytes1"
+        },
+        {
+          "name": "answer",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "VoteProposed",
+      "inputs": [
+        {
+          "name": "decisionID",
+          "type": "bytes1",
+          "indexed": false,
+          "internalType": "bytes1"
+        },
+        {
+          "name": "proposal",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "WithdrawalMade",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    { "type": "error", "name": "AddressHasAlreadyVoted", "inputs": [] },
+    { "type": "error", "name": "AddressNotAllowedToPropose", "inputs": [] },
+    { "type": "error", "name": "AddressNotAllowedToVote", "inputs": [] },
+    { "type": "error", "name": "CreatorCannotMakePayment", "inputs": [] },
+    {
+      "type": "error",
+      "name": "DiferentDecisionID",
+      "inputs": [
+        { "name": "decisionID", "type": "bytes1", "internalType": "bytes1" }
+      ]
+    },
+    { "type": "error", "name": "InvalidPaymentAmount", "inputs": [] },
+    { "type": "error", "name": "NoOngoingVote", "inputs": [] },
+    { "type": "error", "name": "NotEnoughVotesToExecute", "inputs": [] },
+    {
+      "type": "error",
+      "name": "OngoingVote",
+      "inputs": [
+        { "name": "decisionID", "type": "bytes1", "internalType": "bytes1" }
+      ]
+    },
+    { "type": "error", "name": "OnlyCreatorCanExecute", "inputs": [] },
+    { "type": "error", "name": "OnlyMemberCanExecute", "inputs": [] },
+    { "type": "error", "name": "TransferFailed", "inputs": [] },
+    { "type": "error", "name": "VoteFuseExploded", "inputs": [] }
+  ]
+}

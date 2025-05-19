@@ -2,25 +2,82 @@
   "abi": [
     {
       "type": "function",
-      "name": "createSplitter",
+      "name": "createDynamicSplitter",
       "inputs": [
-        {
-          "name": "_addressToSplit",
-          "type": "address[]",
-          "internalType": "address[]"
-        },
-        {
-          "name": "_percentageToSplit",
-          "type": "uint256[]",
-          "internalType": "uint256[]"
-        },
         { "name": "_creator", "type": "address", "internalType": "address" },
         { "name": "_name", "type": "string", "internalType": "string" },
         { "name": "_symbol", "type": "string", "internalType": "string" },
+        { "name": "_baseURI", "type": "string", "internalType": "string" },
         {
           "name": "_pricePerMint",
           "type": "uint256",
           "internalType": "uint256"
+        },
+        {
+          "name": "_percentageToBeginSplit",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_maxPercentageSplit",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_toIncreasePercentageSplit",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_goalForIncreasePercentage",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        { "name": "setToPermanent", "type": "bool", "internalType": "bool" },
+        {
+          "name": "_membersAddressesForSubSplit",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_membersPercentagesForSubSplit",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
+        }
+      ],
+      "outputs": [
+        { "name": "splitter", "type": "address", "internalType": "address" }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "createStaticSplitter",
+      "inputs": [
+        { "name": "_creator", "type": "address", "internalType": "address" },
+        { "name": "_name", "type": "string", "internalType": "string" },
+        { "name": "_symbol", "type": "string", "internalType": "string" },
+        { "name": "_baseURI", "type": "string", "internalType": "string" },
+        {
+          "name": "_pricePerMint",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "_percentageToSplit",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        { "name": "setToPermanent", "type": "bool", "internalType": "bool" },
+        {
+          "name": "_membersAddressesForSubSplit",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        {
+          "name": "_membersPercentagesForSubSplit",
+          "type": "uint16[]",
+          "internalType": "uint16[]"
         }
       ],
       "outputs": [
