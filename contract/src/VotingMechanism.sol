@@ -195,4 +195,16 @@ abstract contract VotingMechanism {
     function _isMember(address _user) internal view returns (bool) {
         return voter[_user].isAllowed == 0x01;
     }
+
+    function getBallotBoxMetadata()
+        external
+        view
+        returns (BallotBoxMetadata memory)
+    {
+        return ballotBox;
+    }
+
+    function getFuse() external view returns (bytes1) {
+        return fuse;
+    }
 }

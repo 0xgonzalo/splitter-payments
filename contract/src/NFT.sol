@@ -6,19 +6,19 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract NFT is ERC721, Ownable {
-    string baseURILink; 
+    string baseURILink;
     uint256 private _nextTokenId;
 
     function _baseURI() internal view override returns (string memory) {
         return baseURILink;
     }
-    
 
-
-    constructor(address initialOwner, string memory name, string memory symbol, string memory _baseURI_)
-        ERC721(name, symbol)
-        Ownable(initialOwner)
-    {
+    constructor(
+        address initialOwner,
+        string memory name,
+        string memory symbol,
+        string memory _baseURI_
+    ) ERC721(name, symbol) Ownable(initialOwner) {
         baseURILink = _baseURI_;
     }
 
