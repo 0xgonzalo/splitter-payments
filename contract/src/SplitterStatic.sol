@@ -266,7 +266,6 @@ contract SplitterStatic is VotingMechanism {
      * @dev This function checks if the vote was successful and updates the percentage split accordingly.
      */
     function executeNewPercentageSplit() external {
-        // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
         (bool answer, uint256 dataToChange) = _execute(0x02);
         if (answer) {
             percentageSplit = uint16(dataToChange);

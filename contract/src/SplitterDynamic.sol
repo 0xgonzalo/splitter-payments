@@ -68,7 +68,6 @@ contract SplitterDynamic is VotingMechanism {
         string memory _symbol,
         string memory _baseURI,
         uint256 _pricePerMint,
-        // este tiene 2 decimales, por ejemplo 1500 para 15.00%
         uint16 _percentageToBeginSplit,
         uint16 _maxPercentageSplit,
         uint16 _toIncreasePercentageSplit,
@@ -122,7 +121,6 @@ contract SplitterDynamic is VotingMechanism {
 
         if (msg.sender == creator) revert CreatorCannotMakePayment();
 
-        // si todavía no se ha alcanzado el límite
         /// @notice Check if the current percentage is less than the maximum allowed percentage.
         if (percentageSplit.actual < percentageSplit.max) {
             /// @notice Increment the payment counter.
@@ -299,7 +297,6 @@ contract SplitterDynamic is VotingMechanism {
      * @dev This function checks if the vote was successful and updates the maximum percentage split accordingly.
      */
     function executeNewMaxPercentageSplit() external {
-        // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
         (bool answer, uint256 dataToChange) = _execute(0x02);
         if (answer) {
             percentageSplit.max = uint16(dataToChange);
@@ -344,7 +341,6 @@ contract SplitterDynamic is VotingMechanism {
      * @dev This function checks if the vote was successful and updates the percentage split to increase accordingly.
      */
     function executeNewPercentageSplitToIncrease() external {
-        // verificar si la votación fue exitosa si es asi se aumenta el porcentaje
         (bool answer, uint256 dataToChange) = _execute(0x04);
         if (answer) {
             percentageSplit.toIncrease = uint16(dataToChange);

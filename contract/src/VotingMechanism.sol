@@ -76,9 +76,10 @@ abstract contract VotingMechanism {
         fuse = setToPermanent ? bytes1(0x00) : bytes1(0x01);
         voterAddresses = initialVoters;
         for (uint256 i = 0; i < initialVoters.length; i++) {
+            /// @dev Initialize the voter metadata
             voter[initialVoters[i]] = VoterMetadata({
                 hasVoted: 0x00,
-                isAllowed: 0x01 // está permitido para votar
+                isAllowed: 0x01
             });
         }
     }
@@ -157,16 +158,16 @@ abstract contract VotingMechanism {
             revert NotEnoughVotesToExecute();
         }
 
-        // Check if the vote was successful (unanimous)
+        /// @dev A vote is considered successful if the number of execute votes equals the total number of votes.
         successful = ballotBox.executeVoteAmount == ballotBox.totalOfVotes;
         proposalToChange = ballotBox.proposal;
 
         if (decisionID == 0x01 && successful) {
-            // If the decision is to explode the fuse, we set it to 0x00
+            /// @dev If the decision is to explode the fuse, set it to 0x00.
             fuse = bytes1(0x00);
         }
 
-        // Reset the ballot box
+        /// @dev Resets the ballot box for the next vote
         ballotBox = BallotBoxMetadata({
             decicionID: 0x00,
             proposal: 0,
@@ -175,7 +176,7 @@ abstract contract VotingMechanism {
             cancelVoteAmount: 0
         });
 
-        // Reset all voters
+        /// @dev Resets the hasVoted status for all voters
         for (uint256 i = 0; i < voterAddresses.length; i++) {
             voter[voterAddresses[i]].hasVoted = 0x00;
         }
