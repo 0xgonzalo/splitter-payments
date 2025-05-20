@@ -13,7 +13,7 @@
  * @notice This contract manages a dynamic splitter that allows for
  *         flexible percentage splits among multiple addresses.
  */
-pragma solidity ^0.8.13;
+pragma solidity 0.8.20;
 
 import {VotingMechanism} from "@splitter/contracts/VotingMechanism.sol";
 import {NFT} from "@splitter/contracts/NFT.sol";

@@ -2,20 +2,20 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {SplitterFactory} from "@splitter/contracts/SplitterFactory.sol";
+import {SplitterStaticFactory} from "@splitter/contracts/SplitterStaticFactory.sol";
 import {SplitterStatic} from "@splitter/contracts/SplitterStatic.sol";
 import {NFT} from "@splitter/contracts/NFT.sol";
 import {Constants} from "./Constants.sol";
 
 contract SplitterStaticUnitTest is Test, Constants {
-    SplitterFactory factory;
+    SplitterStaticFactory factory;
     SplitterStatic splitter;
     NFT nft;
 
     uint256 constant AMOUNT_TO_PAY = 0.001 ether;
 
     function setUp() public {
-        factory = new SplitterFactory();
+        factory = new SplitterStaticFactory();
         address splitterAddress = factory.createStaticSplitter(
             CREATOR.Address,
             "testSplitter",

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {SplitterFactory} from "@splitter/contracts/SplitterFactory.sol";
+import {SplitterDynamicFactory} from "@splitter/contracts/SplitterDynamicFactory.sol";
 import {SplitterDynamic} from "@splitter/contracts/SplitterDynamic.sol";
 import {NFT} from "@splitter/contracts/NFT.sol";
 import {Constants} from "./Constants.sol";
 
 contract SplitterDynamicUnitTest is Test, Constants {
-    SplitterFactory factory;
+    SplitterDynamicFactory factory;
     SplitterDynamic splitter;
     NFT nft;
 
@@ -16,7 +16,7 @@ contract SplitterDynamicUnitTest is Test, Constants {
     uint256 goalToIncreasePercentage = 10;
 
     function setUp() public {
-        factory = new SplitterFactory();
+        factory = new SplitterDynamicFactory();
         address splitterAddress = factory.createDynamicSplitter(
             CREATOR.Address,
             "testSplitter",
