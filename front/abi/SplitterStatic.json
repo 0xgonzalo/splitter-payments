@@ -433,6 +433,7 @@
       ]
     },
     { "type": "error", "name": "InvalidPaymentAmount", "inputs": [] },
+    { "type": "error", "name": "InvalidPercentage", "inputs": [] },
     { "type": "error", "name": "NoOngoingVote", "inputs": [] },
     { "type": "error", "name": "NotEnoughVotesToExecute", "inputs": [] },
     {

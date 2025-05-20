@@ -51,39 +51,37 @@
       "stateMutability": "nonpayable"
     },
     {
-      "type": "function",
-      "name": "createStaticSplitter",
+      "type": "event",
+      "name": "SplitterCreated",
       "inputs": [
-        { "name": "_creator", "type": "address", "internalType": "address" },
-        { "name": "_name", "type": "string", "internalType": "string" },
-        { "name": "_symbol", "type": "string", "internalType": "string" },
-        { "name": "_baseURI", "type": "string", "internalType": "string" },
         {
-          "name": "_pricePerMint",
-          "type": "uint256",
-          "internalType": "uint256"
+          "name": "creator",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
         },
         {
-          "name": "_percentageToSplit",
-          "type": "uint16",
-          "internalType": "uint16"
-        },
-        { "name": "setToPermanent", "type": "bool", "internalType": "bool" },
-        {
-          "name": "_membersAddressesForSubSplit",
-          "type": "address[]",
-          "internalType": "address[]"
+          "name": "splitterAddress",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
         },
         {
-          "name": "_membersPercentagesForSubSplit",
-          "type": "uint16[]",
-          "internalType": "uint16[]"
+          "name": "name",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
         }
       ],
-      "outputs": [
-        { "name": "splitter", "type": "address", "internalType": "address" }
-      ],
-      "stateMutability": "nonpayable"
-    }
+      "anonymous": false
+    },
+    { "type": "error", "name": "InvalidPercentage", "inputs": [] },
+    { "type": "error", "name": "InvalidSubSplitPercentages", "inputs": [] }
   ]
 }

@@ -525,7 +525,14 @@
         { "name": "decisionID", "type": "bytes1", "internalType": "bytes1" }
       ]
     },
+    {
+      "type": "error",
+      "name": "InvalidGoalForIncreasePercentage",
+      "inputs": []
+    },
     { "type": "error", "name": "InvalidPaymentAmount", "inputs": [] },
+    { "type": "error", "name": "InvalidPercentage", "inputs": [] },
+    { "type": "error", "name": "InvalidSubSplitPercentage", "inputs": [] },
     { "type": "error", "name": "NoOngoingVote", "inputs": [] },
     { "type": "error", "name": "NotEnoughVotesToExecute", "inputs": [] },
     {
@@ -540,4 +547,4 @@
     { "type": "error", "name": "TransferFailed", "inputs": [] },
     { "type": "error", "name": "VoteFuseExploded", "inputs": [] }
   ]
-}
+  }
