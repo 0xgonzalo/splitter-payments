@@ -26,6 +26,9 @@ contract SplitterDynamic is VotingMechanism {
     error OnlyCreatorCanExecute();
     error OnlyMemberCanExecute();
     error TransferFailed();
+    error InvalidPercentage();
+    error InvalidSubSplitPercentage();
+    error InvalidGoalForIncreasePercentage();
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ events ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
@@ -76,8 +79,6 @@ contract SplitterDynamic is VotingMechanism {
         address[] memory _membersAddressesForSubSplit,
         uint16[] memory _membersPercentagesForSubSplit
     ) VotingMechanism(setToPermanent, _membersAddressesForSubSplit) {
-        uint256 sumSubSplitPercentages = 0;
-
         for (uint256 i = 0; i < _membersPercentagesForSubSplit.length; i++) {
             subSplits.push(
                 SubSplitMetadata({
@@ -86,11 +87,6 @@ contract SplitterDynamic is VotingMechanism {
                     amountToBeRetired: 0
                 })
             );
-            sumSubSplitPercentages += _membersPercentagesForSubSplit[i];
-        }
-
-        if (sumSubSplitPercentages != BPS_DENOMINATOR) {
-            revert("Sub-split percentages must sum to 100%");
         }
 
         percentageSplit = PercentageSplitMetadata({
@@ -289,6 +285,9 @@ contract SplitterDynamic is VotingMechanism {
     function proposeNewMaxPercentageSplit(
         uint16 newMaxPercentageSplit
     ) external {
+        if (newMaxPercentageSplit > BPS_DENOMINATOR) {
+            revert InvalidPercentage();
+        }
         _proposeVote(0x02, uint256(newMaxPercentageSplit));
     }
 
@@ -311,6 +310,9 @@ contract SplitterDynamic is VotingMechanism {
     function proposeNewGoalForIncreasePercentage(
         uint256 newGoalForIncreasePercentage
     ) external {
+        if (newGoalForIncreasePercentage == 0) {
+            revert InvalidGoalForIncreasePercentage();
+        }
         _proposeVote(0x03, newGoalForIncreasePercentage);
     }
 
@@ -333,6 +335,10 @@ contract SplitterDynamic is VotingMechanism {
     function proposeNewPercentageSplitToIncrease(
         uint16 newPercentageSplitToIncrease
     ) external {
+        if (newPercentageSplitToIncrease > percentageSplit.max) {
+            revert InvalidPercentage();
+        }
+
         _proposeVote(0x04, uint256(newPercentageSplitToIncrease));
     }
 

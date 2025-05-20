@@ -26,6 +26,7 @@ contract SplitterStatic is VotingMechanism {
     error OnlyCreatorCanExecute();
     error OnlyMemberCanExecute();
     error TransferFailed();
+    error InvalidPercentage();
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ events ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
 
@@ -64,8 +65,6 @@ contract SplitterStatic is VotingMechanism {
         address[] memory _membersAddressesForSubSplit,
         uint16[] memory _membersPercentagesForSubSplit
     ) VotingMechanism(setToPermanent, _membersAddressesForSubSplit) {
-        uint256 sumSubSplitPercentages = 0;
-
         for (uint256 i = 0; i < _membersPercentagesForSubSplit.length; i++) {
             subSplits.push(
                 SubSplitMetadata({
@@ -74,11 +73,6 @@ contract SplitterStatic is VotingMechanism {
                     amountToBeRetired: 0
                 })
             );
-            sumSubSplitPercentages += _membersPercentagesForSubSplit[i];
-        }
-
-        if (sumSubSplitPercentages != BPS_DENOMINATOR) {
-            revert("Sub-split percentages must sum to 100%");
         }
 
         percentageSplit = _percentageToSplit;
@@ -135,9 +129,7 @@ contract SplitterStatic is VotingMechanism {
          * The calculation is done by multiplying the total amount by the actual percentage split
          * and dividing it by the denominator (10000).
          */
-        amountForCreator =
-            (_totalAmount * percentageSplit) /
-            BPS_DENOMINATOR;
+        amountForCreator = (_totalAmount * percentageSplit) / BPS_DENOMINATOR;
         return amountForCreator;
     }
 
@@ -255,9 +247,10 @@ contract SplitterStatic is VotingMechanism {
      * @dev This proposal has an ID of 0x02 and allows the community to vote on changing the percentage split.
      * @param newPercentageSplit The new percentage split to be proposed.
      */
-    function proposeNewPercentageSplit(
-        uint16 newPercentageSplit
-    ) external {
+    function proposeNewPercentageSplit(uint16 newPercentageSplit) external {
+        if (newPercentageSplit > BPS_DENOMINATOR) {
+            revert InvalidPercentage();
+        }
         _proposeVote(0x02, uint256(newPercentageSplit));
     }
 
@@ -271,7 +264,6 @@ contract SplitterStatic is VotingMechanism {
             percentageSplit = uint16(dataToChange);
         }
     }
-
 
     // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ Getters Functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     function getSubSplits() external view returns (SubSplitMetadata[] memory) {
@@ -305,9 +297,6 @@ contract SplitterStatic is VotingMechanism {
     function getAmountToBeRetiredForCreator() external view returns (uint256) {
         return amountToBeRetiredForCreator;
     }
-
-
-
 
     function getSubSplitByIndex(
         uint256 index

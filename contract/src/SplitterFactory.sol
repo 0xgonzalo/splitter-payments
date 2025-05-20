@@ -23,6 +23,20 @@ import {SplitterDynamic} from "@splitter/contracts/SplitterDynamic.sol";
 import {SplitterStatic} from "@splitter/contracts/SplitterStatic.sol";
 
 contract SplitterFactory {
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ errors ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+    error InvalidPercentage();
+    error InvalidSubSplitPercentages();
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ events ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
+    event SplitterCreated(
+        address indexed creator,
+        address indexed splitterAddress,
+        string name,
+        string symbol
+    );
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
     /**
      *  @notice Creates a new instance of the Splitter contract with dynamic percentage splitting.
      *  @notice The percentage split ONLY use two decimal places, so 100% is 10000, 25.78% is 2578, etc.
@@ -55,6 +69,11 @@ contract SplitterFactory {
         address[] memory _membersAddressesForSubSplit,
         uint16[] memory _membersPercentagesForSubSplit
     ) public returns (address splitter) {
+        percentageCheck(
+            _percentageToBeginSplit,
+            _membersPercentagesForSubSplit
+        );
+
         splitter = address(
             new SplitterDynamic(
                 _creator,
@@ -70,6 +89,13 @@ contract SplitterFactory {
                 _membersAddressesForSubSplit,
                 _membersPercentagesForSubSplit
             )
+        );
+
+        emit SplitterCreated(
+            _creator,
+            splitter,
+            _name,
+            _symbol
         );
     }
 
@@ -99,6 +125,8 @@ contract SplitterFactory {
         address[] memory _membersAddressesForSubSplit,
         uint16[] memory _membersPercentagesForSubSplit
     ) public returns (address splitter) {
+        percentageCheck(_percentageToSplit, _membersPercentagesForSubSplit);
+
         splitter = address(
             new SplitterStatic(
                 _creator,
@@ -112,5 +140,36 @@ contract SplitterFactory {
                 _membersPercentagesForSubSplit
             )
         );
+
+        emit SplitterCreated(
+            _creator,
+            splitter,
+            _name,
+            _symbol
+        );
+    }
+
+    // ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄ internal functions ▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄▀▄
+
+    /**
+     *  @notice Checks if the percentage to split and the sub-split percentages are valid.
+     *  @param _percentageToSplit The percentage to split.
+     *  @param _membersPercentagesForSubSplit The percentages for sub-splitting.
+     */
+    function percentageCheck(
+        uint16 _percentageToSplit,
+        uint16[] memory _membersPercentagesForSubSplit
+    ) private pure {
+        if (_percentageToSplit > 10000) {
+            revert InvalidPercentage();
+        }
+        uint256 sumSubSplitPercentages = 0;
+        for (uint256 i = 0; i < _membersPercentagesForSubSplit.length; i++) {
+            sumSubSplitPercentages += _membersPercentagesForSubSplit[i];
+        }
+
+        if (sumSubSplitPercentages != 10000) {
+            revert InvalidSubSplitPercentages();
+        }
     }
 }
