@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Bell } from "lucide-react"
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 export default function Header() {
   return (
@@ -16,9 +17,7 @@ export default function Header() {
           <button className="text-gray-300 hover:text-white">
             <Bell className="h-5 w-5" />
           </button>
-          <button className="flex items-center space-x-2 text-gray-300 hover:text-white bg-[#1a2542] rounded-md px-3 py-1.5">
-            <span>Sign In</span>
-          </button>
+          <ConnectButton />
         </div>
       </div>
     </header>
