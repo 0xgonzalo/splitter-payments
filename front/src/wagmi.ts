@@ -1,14 +1,19 @@
-import { http, cookieStorage, createConfig, createStorage } from 'wagmi'
+import { http, createConfig } from 'wagmi'
 import { mainnet, sepolia } from 'wagmi/chains'
 import { coinbaseWallet, injected, walletConnect } from 'wagmi/connectors'
+import { cookieStorage, createStorage } from 'wagmi'
 
 export function getConfig() {
   return createConfig({
     chains: [mainnet, sepolia],
     connectors: [
       injected(),
-      coinbaseWallet(),
-      walletConnect({ projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID }),
+      coinbaseWallet({ appName: 'Splitter Payments' }),
+      walletConnect({ 
+        projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? (() => {
+          throw new Error('NEXT_PUBLIC_WC_PROJECT_ID is required')
+        })()
+      }),
     ],
     storage: createStorage({
       storage: cookieStorage,
@@ -19,10 +24,4 @@ export function getConfig() {
       [sepolia.id]: http(),
     },
   })
-}
-
-declare module 'wagmi' {
-  interface Register {
-    config: ReturnType<typeof getConfig>
-  }
 }
