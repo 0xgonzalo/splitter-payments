@@ -46,7 +46,12 @@ export default function Sidebar({ activePage = "create" }: SidebarProps) {
 
       <div className="px-4 py-4">
         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">ACCOUNT PAGES</h3>
-        <Link href="#" className="flex items-center space-x-3 text-gray-400 hover:text-white rounded-md px-3 py-2.5">
+        <Link 
+          href="/ai" 
+          className={`flex items-center space-x-3 rounded-md px-3 py-2.5 ${
+            activePage === "ai" ? "text-white bg-blue-600" : "text-gray-400 hover:text-white"
+          }`}
+        >
           <div className="h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">AI</div>
           <span>Ask AI</span>
         </Link>

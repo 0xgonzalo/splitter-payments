@@ -2,7 +2,11 @@ import Link from "next/link"
 import { Bell } from "lucide-react"
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
-export default function Header() {
+interface HeaderProps {
+  title?: string;
+}
+
+export default function Header({ title = "Create" }: HeaderProps) {
   return (
     <header className="border-b border-gray-800 bg-[#0a1025]/50 backdrop-blur-sm p-4">
       <div className="flex items-center justify-between">
@@ -11,7 +15,7 @@ export default function Header() {
             Pages
           </Link>
           <span>/</span>
-          <span className="text-white">Create</span>
+          <span className="text-white">{title}</span>
         </div>
         <div className="flex items-center space-x-4">
           <button className="text-gray-300 hover:text-white">
