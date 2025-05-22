@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Paperclip, Send } from 'lucide-react';
+import { client } from '@/client';
+import { useAccount } from 'wagmi';
+import { Nebula } from 'thirdweb/ai';
+import { mantle, mantleSepolia } from '@/chains';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,36 +18,108 @@ export default function NebulaChat() {
     }
   ]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get the connected wallet address
+  const { address } = useAccount();
+  
+  // Static Factory Contract address
+  const FACTORY_CONTRACT_ADDRESS = '0xa38e93caaec44b8d9d9cfaa902ec6b4782b0e3e1';
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
     
     // Add user message
-    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    const userMessage = { role: 'user' as const, content: input };
+    setMessages(prev => [...prev, userMessage]);
     
-    // Simulate AI response after a short delay
-    setTimeout(() => {
-      let response = "I'm Nebula, an AI assistant for blockchain and smart contracts. I can help analyze your wallet activity, monitor contracts, and answer questions about cryptocurrency and blockchain technology.";
-      
-      if (input.toLowerCase().includes('earn')) {
-        response = "Based on your wallet history, you've earned 0.15 ETH this month from your contracts.";
-      } else if (input.toLowerCase().includes('contract') && input.toLowerCase().includes('profitable')) {
-        response = "Your most profitable contract is the SplitterDynamic contract deployed on Ethereum, which has generated 0.08 ETH in the last 30 days.";
-      } else if (input.toLowerCase().includes('erc20')) {
-        response = "An ERC20 is a standard interface for fungible tokens on Ethereum. It includes functions like transfer(), approve(), and balanceOf() that all ERC20 tokens implement.";
-      } else if (input.toLowerCase().includes('nebula')) {
-        response = "I can help you monitor contracts, analyze wallet activity, and answer questions about blockchain technology. Just ask whatever you need!";
-      } else if (input.toLowerCase().includes('balance')) {
-        response = "You don't have any unclaimed balances in your splitter contracts at the moment.";
+    // Clear input and set loading
+    setInput('');
+    setIsLoading(true);
+    
+    try {
+      // Check if we have a client ID before proceeding
+      if (!process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID) {
+        throw new Error("Missing ThirdWeb Client ID. Please check your environment variables.");
       }
       
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-    }, 1000);
-    
-    setInput('');
+      // Check if user is connected - not strictly required but helps provide better feedback
+      if (!address) {
+        console.warn("No wallet connected, Nebula might provide limited responses");
+      }
+      
+      // Create an array of messages for context
+      const messageHistory = messages.slice(1).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      // Add the new user message
+      messageHistory.push({
+        role: 'user' as const,
+        content: input
+      });
+
+      console.log("Calling Nebula with context:", {
+        messageCount: messageHistory.length,
+        hasWallet: !!address,
+        factoryContract: FACTORY_CONTRACT_ADDRESS
+      });
+
+      // Call Nebula API with simplified context filter
+      const response = await Nebula.chat({
+        client,
+        messages: messageHistory.map(msg => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content
+        })),
+        contextFilter: {
+          contractAddresses: [FACTORY_CONTRACT_ADDRESS],
+          walletAddresses: address ? [address] : [],
+          // Remove chains for now as it's causing type issues
+        }
+      });
+
+      // Add the assistant's response to messages
+      setMessages(prev => [
+        ...prev, 
+        { role: 'assistant', content: response.message }
+      ]);
+      
+      // Check if there are any transactions to execute
+      if (response.transactions && response.transactions.length > 0) {
+        // You would typically handle transactions here, showing them to the user
+        console.log('Suggested transactions:', response.transactions);
+      }
+    } catch (error) {
+      console.error('Error communicating with Nebula:', error);
+      
+      // Provide a more specific error message if possible
+      let errorMessage = 'I apologize, but I encountered an error processing your request. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Client ID")) {
+          errorMessage = 'API configuration error: Missing or invalid ThirdWeb Client ID.';
+        } else if (error.message.includes("rate limit") || error.message.includes("429")) {
+          errorMessage = 'Nebula API rate limit exceeded. Please try again in a moment.';
+        } else if (error.message.includes("unauthorized") || error.message.includes("401")) {
+          errorMessage = 'Authorization error: Your account may not have access to Nebula or credentials are invalid.';
+        }
+        
+        // Log the specific error for debugging
+        console.error('Nebula error details:', error.message);
+      }
+      
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: errorMessage }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleQuickQuestion = (question: string) => {
@@ -111,6 +187,17 @@ export default function NebulaChat() {
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="mb-4">
+                <div className="inline-block p-3 rounded-lg bg-[#1a2542] text-white rounded-bl-none">
+                  <div className="flex space-x-2">
+                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -131,10 +218,12 @@ export default function NebulaChat() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask Nebula something"
                 className="flex-1 bg-transparent text-white border-none outline-none p-2 mx-2"
+                disabled={isLoading}
               />
               <button 
                 type="submit" 
-                className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none"
+                className={`p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isLoading}
               >
                 <Send className="h-5 w-5" />
               </button>
@@ -146,32 +235,37 @@ export default function NebulaChat() {
             <button 
               onClick={() => handleQuickQuestion("How much did I earn this month?")}
               className="bg-[#1a2542] text-white text-sm rounded-full px-5 py-2.5 hover:bg-[#2a3552]"
+              disabled={isLoading}
             >
               How much did I earn this month?
             </button>
             <button 
               onClick={() => handleQuickQuestion("Which was my most profitable contract?")}
               className="bg-[#1a2542] text-white text-sm rounded-full px-5 py-2.5 hover:bg-[#2a3552]"
+              disabled={isLoading}
             >
               Which was my most profitable contract?
             </button>
             <button 
-              onClick={() => handleQuickQuestion("What can I do with Nebula?")}
+              onClick={() => handleQuickQuestion("List all contracts created from the factory contract")}
               className="bg-[#1a2542] text-white text-sm rounded-full px-5 py-2.5 hover:bg-[#2a3552]"
+              disabled={isLoading}
             >
-              What can I do with Nebula?
+              List all contracts created from the factory contract
             </button>
             <button 
               onClick={() => handleQuickQuestion("Do I have unclaimed balances?")}
               className="bg-[#1a2542] text-white text-sm rounded-full px-5 py-2.5 hover:bg-[#2a3552]"
+              disabled={isLoading}
             >
               Do I have unclaimed balances?
             </button>
             <button 
-              onClick={() => handleQuickQuestion("What is an ERC20?")}
+              onClick={() => handleQuickQuestion("What is the Static Contract Factory's purpose?")}
               className="bg-[#1a2542] text-white text-sm rounded-full px-5 py-2.5 hover:bg-[#2a3552]"
+              disabled={isLoading}
             >
-              What is an ERC20?
+              What is the Static Contract Factory's purpose?
             </button>
           </div>
         </div>
