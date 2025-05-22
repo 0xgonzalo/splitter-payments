@@ -1,8 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   background-color: #181818;
   color: rgba(255, 255, 255, 0.87);
   color-scheme: light dark;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; */
   font-synthesis: none;
   font-weight: 400;
   line-height: 1.5;
@@ -18,4 +22,26 @@
     background-color: #f8f8f8;
     color: #181818;
   }
+}
+
+@font-face {
+  font-family: 'MADE Tommy Soft Regular';
+  src: url('/fonts/MADE Tommy Soft Regular PERSONAL USE.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MADE Tommy Soft Medium';
+  src: url('/fonts/MADE Tommy Soft Medium PERSONAL USE.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MADE Tommy Soft Bold';
+  src: url('/fonts/MADE Tommy Soft Bold PERSONAL USE.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
