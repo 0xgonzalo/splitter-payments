@@ -1,6 +1,6 @@
 "use client"
 
-import NebulaChat from '@/components/NebulaChat';
+import NebulaChat from '@/components/NebulaChat/NebulaChat';
 
 export default function AIPage() {
   return (
