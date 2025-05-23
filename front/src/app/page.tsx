@@ -13,7 +13,7 @@ export default function Home() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-3 flex items-center gap-2">
             {activeTab === "split" ? "Create a Split Contract" : "Dynamic Form"}
-            <span className="inline-block animate-spin text-blue-400">◎</span>
+            <img src="/images/mantle.png" alt="Mantle" className="inline-block animate-bounce h-8 w-8" />
           </h1>
           {activeTab === "split" ? (
             <p className="text-gray-300 max-w-2xl">
@@ -23,7 +23,8 @@ export default function Home() {
             </p>
           ) : (
             <p className="text-gray-300 max-w-2xl">
-              Configure dynamic settings for your split contract with additional parameters and options.
+              This option allows you to split earnings from NFT sales or any other revenue source among multiple wallets. As the total revenue grows, the creator’s share can increase dynamically based on milestones you define.
+              Use this form to set initial percentages, define how and when the creator’s cut increases, and deploy your own customizable split logic onchain.
             </p>
           )}
         </div>
