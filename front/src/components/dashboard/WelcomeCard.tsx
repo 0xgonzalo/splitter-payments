@@ -7,7 +7,7 @@ interface WelcomeCardProps {
 
 export default function WelcomeCard({ name, avatarUrl }: WelcomeCardProps) {
   return (
-    <div className="bg-[#0c1e3d]/80 rounded-lg h-full backdrop-blur-sm overflow-hidden">
+    <div className="bg-[#0c1e3d]/80 rounded-lg h-full backdrop-blur-sm overflow-hidden flex justify-between>">
       <div className="p-5">
         <h2 className="text-gray-400 text-sm">Welcome back,</h2>
         <h1 className="text-white text-2xl font-bold mt-1">{name}</h1>
@@ -19,8 +19,8 @@ export default function WelcomeCard({ name, avatarUrl }: WelcomeCardProps) {
           <Image
             src={avatarUrl || "/placeholder.svg"}
             alt="Profile avatar"
-            width={160}
-            height={160}
+            width={200}
+            height={200}
             className="object-cover"
           />
         </div>
